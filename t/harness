@@ -1,0 +1,25 @@
+#!/usr/bin/env perl
+
+use 5.008;
+use strict;
+use warnings;
+use Getopt::Long;
+
+my %harness_args = (
+    language  => 'perl6',
+    jobs      => $ENV{TEST_JOBS} || 1,
+    verbosity => 1,
+    merge     => 0,
+);
+
+GetOptions(
+    'verbosity=i' => \$harness_args{verbosity},
+    'bindir=s'    => \my $bindir,
+    'jobs:3'      => \$harness_args{jobs},
+);
+
+
+$harness_args{exec} = [$bindir . '/perl6'];
+
+eval 'use Parrot::Test::Harness %harness_args';
+
