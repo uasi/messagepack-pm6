@@ -1,5 +1,5 @@
-MessagePack.pm6 ‚Í MessagePack ‚Ì Perl 6 À‘•‚Å‚·B
+MessagePack.pm6 ã¯ MessagePack ã® Perl 6 å®Ÿè£…ã§ã™ã€‚
 
-MessagePack.pm6 ‚Ìì¬‚É‚ ‚½‚Á‚Ä‚ÍˆÈ‰º‚Ìƒ‰ƒCƒuƒ‰ƒŠ‚ğQl‚É‚µ‚Ä‚¢‚Ü‚·F
+MessagePack.pm6 ã®ä½œæˆã«ã‚ãŸã£ã¦ã¯ä»¥ä¸‹ã®ãƒ©ã‚¤ãƒ–ãƒ©ãƒªã‚’å‚è€ƒã«ã—ã¦ã„ã¾ã™ï¼š
     - MessagePack-JS http://github.com/cuzic/MessagePack-JS
     - msgpack_pure   http://github.com/nayutaya/msgpack-pure
