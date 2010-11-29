@@ -1,7 +1,7 @@
 use v6;
 
 class MessagePack::Unpacker {
-    role Readable {
+    my role Readable {
         has $!pos = 0;
 
         method read($bytes) {
