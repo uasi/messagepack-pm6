@@ -23,7 +23,7 @@ class MessagePack::Unpacker {
     has $!str;
 
     my %unpack-for-type = (
-        0xc0 => { Nil   },
+        0xc0 => { Any   },
         0xc2 => { False },
         0xc3 => { True  },
         0xca => { $_!unpack-float  },
@@ -44,12 +44,8 @@ class MessagePack::Unpacker {
         0xdf => { $_!unpack-map(  pairs => $_!unpack-uint32) },
     );
 
-    submethod BUILD($str) {
-        $!str = $str but Readable;
-    }
-
     method new($str) {
-        self.bless(*, :$str);
+        self.bless(*, str => $str but Readable);
     }
 
     # Class method
@@ -176,4 +172,3 @@ class MessagePack::Unpacker {
 }
 
 # vim: ft=perl6
-

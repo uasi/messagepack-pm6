@@ -4,9 +4,13 @@ module MessagePack;
 
 use MessagePack::Unpacker;
 
-sub unpack($str) {
+multi sub unpack(Str $str) {
     MessagePack::Unpacker.unpack($str);
 }
 
-# vim: ft=perl6 :
+multi sub from-msgpack(Str $str) is export {
+    MessagePack::Unpacker.unpack($str);
+}
+
+# vim: ft=perl6
 

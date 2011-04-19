@@ -48,7 +48,7 @@ is .unpack("\xd3\x7f" ~ "\xff" x 7),  0x7fff_ffff_ffff_ffff, q[int64];
 is .unpack("\xd3"     ~ "\xff" x 8), -0x0000_0000_0000_0001, q[int64];
 is .unpack("\xd3\x80" ~ "\x00" x 7), -0x8000_0000_0000_0000, q[int64];
 
-is .unpack("\xc0"), Nil,   q[nil];
+is .unpack("\xc0"), Any,   q[nil];
 is .unpack("\xc2"), False, q[false];
 is .unpack("\xc3"), True,  q[true];
 
