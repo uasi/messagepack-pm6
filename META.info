@@ -1,5 +1,6 @@
 {
     "name"        : "MessagePack",
+    "author"      : "github:uasi",
     "version"     : "*",
     "description" : "A MessagePack implementation",
     "depends"     : [],

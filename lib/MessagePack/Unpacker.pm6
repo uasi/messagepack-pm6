@@ -1,31 +1,15 @@
 use v6;
 
 class MessagePack::Unpacker {
-    my role Readable {
-        has $!pos = 0;
-
-        method read($bytes) {
-            fail if $!pos + $bytes > self.bytes;
-            my $s = self.substr($!pos, $bytes);
-            $!pos += $bytes;
-            $s;
-        }
-
-        method read-bytes($bytes) {
-            self.read($bytes).comb>>.ord;
-        }
-
-        method eos() {
-            $!pos == self.bytes;
-        }
-    }
-    
     has $!str;
 
     my %unpack-for-type = (
         0xc0 => { Any   },
         0xc2 => { False },
         0xc3 => { True  },
+        0xc4 => { $_!unpack-raw(  bytes => $_!unpack-uint8) },
+        0xc5 => { $_!unpack-raw(  bytes => $_!unpack-uint16) },
+        0xc6 => { $_!unpack-raw(  bytes => $_!unpack-uint32) },
         0xca => { $_!unpack-float  },
         0xcb => { $_!unpack-double },
         0xcc => { $_!unpack-uint8  },
@@ -36,17 +20,20 @@ class MessagePack::Unpacker {
         0xd1 => { $_!unpack-int16  },
         0xd2 => { $_!unpack-int32  },
         0xd3 => { $_!unpack-int64  },
-        0xda => { $_!unpack-raw(  bytes => $_!unpack-uint16) },
-        0xdb => { $_!unpack-raw(  bytes => $_!unpack-uint32) },
+        0xd9 => { $_!unpack-str(  bytes => $_!unpack-uint8) },
+        0xda => { $_!unpack-str(  bytes => $_!unpack-uint16) },
+        0xdb => { $_!unpack-str(  bytes => $_!unpack-uint32) },
         0xdc => { $_!unpack-array(elems => $_!unpack-uint16) },
         0xdd => { $_!unpack-array(elems => $_!unpack-uint32) },
         0xde => { $_!unpack-map(  pairs => $_!unpack-uint16) },
         0xdf => { $_!unpack-map(  pairs => $_!unpack-uint32) },
     );
 
-    method new($str) {
-        self.bless(*, str => $str but Readable);
+    method new(Blob $str) {
+        self.bless(str => Buf.new($str));
     }
+
+    submethod BUILD(:$!str) { };
 
     # Class method
     method unpack($str) {
@@ -68,7 +55,7 @@ class MessagePack::Unpacker {
             }
             when ($type +& 0b1110_0000) == 0b1010_0000 {
                 # fixraw
-                self!unpack-raw(bytes => $type +& 0b1_1111);
+                self!unpack-str(bytes => $type +& 0b1_1111);
             }
             when ($type +& 0b1111_0000) == 0b1001_0000 {
                 # fixarray
@@ -78,7 +65,7 @@ class MessagePack::Unpacker {
                 # fixmap
                 self!unpack-map(pairs => $type +& 0b1111);
             }
-            when %unpack-for-type.exists($type) {
+            when %unpack-for-type{$type} :exists {
                 %unpack-for-type{$type}(self);
             }
             default {
@@ -88,25 +75,27 @@ class MessagePack::Unpacker {
     }
 
     method !unpack-uint8() {
-        $!str.read-bytes(1)[0];
+        my $v = $!str.unpack('C');
+        $!str .= subbuf(1);
+        return $v;
     }
     
     method !unpack-uint16() {
-        my @bytes = $!str.read-bytes(2);
-        (@bytes[0] +< 8) +|
-        (@bytes[1]     );
+        my $v = $!str.unpack('n');
+        $!str .= subbuf(2);
+        return $v;
     }
 
     method !unpack-uint32() {
-        my @bytes = $!str.read-bytes(4);
-        (@bytes[0] +< 24) +|
-        (@bytes[1] +< 16) +|
-        (@bytes[2] +<  8) +|
-        (@bytes[3]      );
+        my $v = $!str.unpack('N');
+        $!str .= subbuf(4);
+        return $v;
     }
 
     method !unpack-uint64() {
-        my @bytes = $!str.read-bytes(8);
+        # XXX Need uint64 unpack code
+        my @bytes = $!str.subbuf(0, 8).list;
+        $!str .= subbuf(8);
         (@bytes[0] +< 56) +|
         (@bytes[1] +< 48) +|
         (@bytes[2] +< 40) +|
@@ -134,7 +123,7 @@ class MessagePack::Unpacker {
 
     method !unpack-int64() {
         my $uint64 = self!unpack-uint64;
-        ($uint64 < (1 +< 15)) ?? $uint64 !! $uint64 - (1 +< 64);
+        ($uint64 < (1 +< 63)) ?? $uint64 !! $uint64 - (1 +< 64);
     }
 
     method !unpack-float() {
@@ -158,15 +147,21 @@ class MessagePack::Unpacker {
         $sign * (($hfrac * 2 ** ($exp - 20)) + 132 * ($lo * 2 ** ($exp - 52)));
     }
 
-    method !unpack-raw($bytes) {
-        $!str.read($bytes);
+    method !unpack-str(:$bytes) {
+        return self!unpack-raw(:$bytes).decode('UTF-8');
     }
 
-    method !unpack-array($elems) {
+    method !unpack-raw(:$bytes) {
+        my $v = $!str.subbuf(0, $bytes);
+        $!str .= subbuf($bytes);
+        return $v;
+    }
+
+    method !unpack-array(:$elems) {
         list(gather for ^$elems { take self!unpack });
     }
 
-    method !unpack-map($pairs) {
+    method !unpack-map(:$pairs) {
         hash(gather for ^$pairs { take self!unpack => self!unpack });
     }
 }

@@ -4,12 +4,12 @@ module MessagePack;
 
 use MessagePack::Unpacker;
 
-multi sub unpack(Str $str) {
-    MessagePack::Unpacker.unpack($str);
+our sub unpack(Blob $data) {
+    MessagePack::Unpacker.unpack($data);
 }
 
-multi sub from-msgpack(Str $str) is export {
-    MessagePack::Unpacker.unpack($str);
+our sub from-msgpack(Blob $data) is export {
+    MessagePack::Unpacker.unpack($data);
 }
 
 # vim: ft=perl6
